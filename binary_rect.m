@@ -24,7 +24,7 @@ for i = 1:5
     end
     unique_label = unique(label_bw);
     unique_label(unique_label==0) = [];
-    % if unique_label number greater than 8, we want to delete the last one
+    % if unique_label number greater than 8, we want to delete the rest few
     % because the one may not be sensitive to detect. Here is the upper
     % side of the ice cube shape
     if length(unique_label)>8
@@ -55,17 +55,16 @@ for i = 1:5
     rect_count = rect_count + length(unique_label);
 end
 
+for display_key = 1:5
+	I = imread(['00',num2str(display_key),'.png']);
+	figure()
+	imshow(I);
+	hold on
+	draw_rect(rect_record(rect_record(:,end)==display_key,:));
+	hold off
+	figure()
+	imshow(bw_im(:,:,display_key))
+end
 
-display_key = 1;
-I = imread(['00',num2str(display_key),'.png']);
-figure()
-imshow(I);
-hold on
-draw_rect(rect_record(rect_record(:,end)==display_key,:));
-hold off
-figure()
-imshow(bw_im(:,:,display_key))
-
-new_record = [];
 
 

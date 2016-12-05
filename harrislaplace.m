@@ -95,19 +95,19 @@ function points = harrislaplace(img)
                 cpt = cpt+1;
                 points(cpt,:) = harris_pts(i,:);
             end
-%         elseif s==1
-%             if val>laplace_snlo(l,c,2)
-%                 cpt = cpt+1;
-%                 points(cpt,:) = harris_pts(i,:);
-%             end
-%         elseif s==sigma_nb
-%             if val>laplace_snlo(l,c,s-1)
-%                 cpt = cpt+1;
-%                 points(cpt,:) = harris_pts(i,:);
-%             end
-%         end
+        elseif s==1
+            if val>laplace_snlo(l,c,2)
+                cpt = cpt+1;
+                points(cpt,:) = harris_pts(i,:);
+            end
+        elseif s==sigma_nb
+            if val>laplace_snlo(l,c,s-1)
+                cpt = cpt+1;
+                points(cpt,:) = harris_pts(i,:);
+            end
         end
-    end
+ end
+
     points(cpt+1:end,:) = [];
     
     % SET SCALE TO 3*SIGMA FOR DISPLAY

@@ -8,9 +8,9 @@ function points = harrislaplace(img)
     
     % this file take in gray picture and return points, 
     % every row of the points variable is a detected key point, the first
-    % column is the picture-x, (matrix column) and the second is the
-    % picture-y (the matrix row), the third has the scales.
-    
+	% two are the rows and columns(all in matrix way) NOTE: if you 
+	% want to plot, you have to follow picture convention, where you have to
+	% converse your coordinates
     % What I have done to the file:
     % 1)modify some coefficient of the algorithm to the adapt to the
     % specific situation

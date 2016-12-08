@@ -19,7 +19,7 @@ for i = 1:5
     label_bw = bwlabel(1-bw_im(:,:,i));
     unique_label = unique(label_bw);
     for j = 1:length(unique_label)
-        if sum(sum(label_bw==unique_label(j)))<80
+        if sum(sum(label_bw==unique_label(j)))<300
             label_bw(label_bw==unique_label(j)) = 0;
         end
     end

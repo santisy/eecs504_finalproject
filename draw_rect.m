@@ -1,4 +1,4 @@
-function draw_rect(rect_info)
+function draw_rect(rect_info,rect_idx)
 % about the rectangular
 % [x, y, length/2, length_direction, width/2, width_direction,pic#]
 syms x y
@@ -25,4 +25,7 @@ for i = 1:size(rect_info,1)
     plot(four_corner(3:4,2),four_corner(3:4,1),'b-','LineWidth',2);
     plot(four_corner([1,3],2),four_corner([1,3],1),'b-','LineWidth',2);
     plot(four_corner([2,4],2),four_corner([2,4],1),'b-','LineWidth',2);
+    if nargin == 2
+        text(rect_info(:,2), rect_info(:,1),num2str(rect_idx));
+    end
 end

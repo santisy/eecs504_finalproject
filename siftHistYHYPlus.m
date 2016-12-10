@@ -1,5 +1,6 @@
-function descriptor = siftHistYHY(row,column,scale,image)
+function descriptor = siftHistYHYPlus(row,column,scale,keypointOrient,image)
 % This function generates a sift-histogram descriptor
+% The orientation is given by the "orientation" term
 % Modified to be compatible with Yuhao Yu's script
 % column and row are the coordinate of the feature point
 % scale is the sigma for the DoG operator
@@ -12,25 +13,25 @@ function descriptor = siftHistYHY(row,column,scale,image)
 % now start the sift part
 %disp('debug')
 image = imfilter(image, fspecial('gaussian'),'same');
-grayImage = im2double(rgb2gray(image));
+grayImage = rgb2gray(image);
 [m,n] = size(grayImage);
-% now calculate the dominant orientation
+% % now calculate the dominant orientation
 dxFilter = [1,0,-1];
 dyFilter = [1,0,-1]';
-
-prePatch = grayImage(floor(row-2*scale):floor(row+2*scale),floor(column-2*scale):floor(column+2*scale),:);
-preDxMat = (imfilter(prePatch, dxFilter,'symmetric'));
-preDyMat = (imfilter(prePatch, dyFilter,'symmetric'));
-preMagnMat = sqrt(preDxMat.*preDxMat + preDyMat.*preDyMat);
-[m1,n1] = size(preDxMat);
+% 
+% prePatch = grayImage(floor(row-3*scale):floor(row+3*scale),floor(column-3*scale):floor(column+3*scale),:);
+% preDxMat = double(imfilter(prePatch, dxFilter,'symmetric'));
+% preDyMat = double(imfilter(prePatch,dyFilter,'symmetric'));
+% preMagnMat = sqrt(preDxMat.*preDxMat + preDyMat.*preDyMat);
+% [m1,n1] = size(preDxMat);
 % preDxMat = gaussianKernel(m1).*preDxMat;
 % preDyMat = gaussianKernel(m1).*preDyMat;
 % Ixy = [preDxMat(:)';preDyMat(:)'];
 % sTensor = Ixy*Ixy'; 
 % [U,lbd] = eig(sTensor);
 % u = U(:,1);
-preOrientMat = atan2(preDyMat, preDxMat);
-[keypointOrient,~] = gradHist(gaussianKernel(m1).*preMagnMat,preOrientMat,36);
+% preOrientMat = atan2(preDyMat, preDxMat);
+% [keypointOrient,~] = gradHist(gaussianKernel(m1).*preMagnMat,preOrientMat,36);
 %keypointOrient = rad2deg(keypointOrient);
 
 %keypointOrient = rad2deg(atan2((double(grayImage(row+1,column))-double(grayImage(row-1,column))),double(grayImage(row,column+1))-double(grayImage(row,column-1))));
@@ -41,8 +42,7 @@ T2 = maketform('affine',[1 0 0; 0 1 0; column row 1]);
 transMat = maketform('composite', T2, R1, T1);
 rotatedImage = imtransform(image, transMat, 'XData', [1 m], 'YData', [1 n]);
 patch = rotatedImage(floor(row-3*scale):floor(row+3*scale),floor(column-3*scale):floor(column+3*scale),:);
-patch = (imresize(patch,[16,16])); % get the rescaled path
-
+patch = imresize(patch,[16,16]); % get the rescaled path
 
 histVec = zeros(30,1);
 % now calculate the hist
@@ -82,7 +82,7 @@ descriptor(31:end) = siftRaw;
 %now conbine all the elements
 
 function h = gaussianKernel(size)
-sigma = size./4;
+sigma = size./2;
 ind = -floor(size/2) : floor(size/2);
 [X Y] = meshgrid(ind, ind);
 h = exp(-(X.^2 + Y.^2) / (2*sigma*sigma));

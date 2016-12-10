@@ -8,8 +8,8 @@
 close all
 clear
 % Set threshold for harris response and laplacian response
-harris_threshold = 0.001;
-laplacian_threshold = 0.0001;
+harris_threshold = 0.0001;
+laplacian_threshold = 0.001;
 % Generate information for item patch
 load 'rect_info.mat'
 %run 'binary_rect.m'
@@ -54,17 +54,17 @@ I2 = conv2(I2,H,'same');
 % F2 = F2(:,mask2);
 % D2 = D2(:,mask2);
 
-[F1,scales1,~,~] = harrislaplacePlus(I1,harris_threshold,laplacian_threshold);
-[F2,scales2,~,~] = harrislaplacePlus(I2,harris_threshold,laplacian_threshold);
+[F1,scales1,~,~,orientation1] = harrislaplacePlusPlus(I1,harris_threshold,laplacian_threshold);
+[F2,scales2,~,~,orientation2] = harrislaplacePlusPlus(I2,harris_threshold,laplacian_threshold);
 [m1,~] = size(F1);
 [m2,~] = size(F2);
 D1 = zeros(m1,158);
 D2 = zeros(m2,158);
 for i = 1:m1
-    D1(i,:) = siftHistYHY(F1(i,1),F1(i,2),scales1(i),IM1);
+    D1(i,:) = siftHistYHYPlus(F1(i,1),F1(i,2),scales1(i),orientation1(i),IM1);
 end
 for i = 1:m2
-    D2(i,:) = siftHistYHY(F2(i,1),F2(i,2),scales2(i),IM2);
+    D2(i,:) = siftHistYHYPlus(F2(i,1),F2(i,2),scales2(i),orientation2(i),IM2);
 end
 % change the format to be compatible with Haoyu's script 
 
@@ -176,12 +176,12 @@ end
 % default threshold = 1.5
 % distance between matched points <= thresh * dist between the point and
 % anyother points
-thresh = 1.5;
+thresh = 0.8;
 rect_num1 = length(unique(point_record1));
 rect_num2 = length(unique(point_record2));
 cost = zeros(rect_num1,rect_num2);
-De1 = [D1;1.5*DC1];
-De2 = [D2;1.5*DC2];
+De1 = [D1;0*DC1];
+De2 = [D2;0*DC2];
 for i = 1:rect_num1
     idx1 = (point_record1 == i);
     for j = 1:rect_num2     
@@ -201,7 +201,7 @@ for i = 1:rect_num1
         else
             cost(i,j) = mean(score(1:5));
         end
-        %cost(i,j) = cost(i,j) + norm(V1(:,i)-V2(:,j))/2;
+        %cost(i,j) = cost(i,j) + 8*norm(V1(:,i)-V2(:,j));
     end
 end
 %--------------------------------------------------------------------------

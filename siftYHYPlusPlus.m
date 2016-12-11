@@ -1,4 +1,5 @@
 function descriptor = siftHistYHYPlus(row,column,scale,keypointOrient,image)
+
 % This function generates a sift-histogram descriptor
 % The orientation is given by the "orientation" term
 % Modified to be compatible with Yuhao Yu's script
@@ -12,7 +13,7 @@ function descriptor = siftHistYHYPlus(row,column,scale,keypointOrient,image)
 
 % now start the sift part
 %disp('debug')
-image = imfilter(image, fspecial('gaussian'),'same');
+image = imfilter(image, fspecial('gaussian',[8,8],scale),'same');
 grayImage = rgb2gray(image);
 [m,n] = size(grayImage);
 % % now calculate the dominant orientation
@@ -41,9 +42,20 @@ R1 = maketform('affine',[cos(-keypointOrient) sin(-keypointOrient) 0; -sin(-keyp
 T2 = maketform('affine',[1 0 0; 0 1 0; column row 1]);
 transMat = maketform('composite', T2, R1, T1);
 rotatedImage = imtransform(image, transMat, 'XData', [1 m], 'YData', [1 n]);
-patch = rotatedImage(floor(row-3*scale):floor(row+3*scale),floor(column-3*scale):floor(column+3*scale),:);
-patch = imresize(patch,[16,16]); % get the rescaled path
-% 
+% patch = rotatedImage(floor(row-3*scale):floor(row+3*scale),floor(column-3*scale):floor(column+3*scale),:);
+% patch = imresize(patch,[16,16]); % get the rescaled path
+ patch = rotatedImage(floor(row-0.5-8):floor(row - 0.5+8),floor(column-0.5-8):floor(column - 0.5+8),:);
+ patch = imresize(patch,[16,16]);
+%  close all;
+%  imagesc(image);
+%  hold on
+%  plot(column,row,'r*');
+%  figure
+%  imagesc(rotatedImage);
+%  hold on
+%  plot(column,row,'r*');
+ 
+ 
 % histVec = zeros(30,1);
 % now calculate the hist
 % centers = 1/10;       % bin offset
@@ -61,19 +73,24 @@ patch = im2double(rgb2gray(patch));
 dxMat = (imfilter(patch, dxFilter,'symmetric'));
 dyMat = (imfilter(patch, dyFilter,'symmetric'));
 magnMat = sqrt(dxMat.*dxMat + dyMat.*dyMat);
+% figure
+% imagesc(patch);
+% figure
+% imagesc(dxMat);
+% figure
+% imagesc(dyMat);
+% figure
+% imagesc(magnMat);
+
+magnMat = magnMat.*gaussianKernel(16,0.5*16);
+% figure
+% imagesc(magnMat);
 orientMat = atan2(dyMat, dxMat);
-% then do the gaussian weighting
-magnMat = magnMat.*gaussianKernel(16);
-siftRaw = zeros(16,8);
-% then calculate the histogram
-count = 0;
-for i = 1:4:16
-    for j = 1:4:16
-        count = count + 1;
-        [~,siftRaw(count,:)] = gradHist(magnMat(i:i+3,j:j+3),orientMat(i:i+3,j:j+3),8);
-    end
-end
-siftRaw = reshape(siftRaw,[128,1]);
+siftRaw = grad_hist(magnMat,orientMat,8,scale);
+
+siftRaw = siftRaw./norm(siftRaw);
+idx = find(siftRaw>=0.2);
+siftRaw(idx) = 0.2;
 siftRaw = siftRaw./norm(siftRaw);
 
 %descriptor = zeros(30+128,1);
@@ -83,42 +100,44 @@ descriptor = siftRaw;
 
 %now conbine all the elements
 
-function h = gaussianKernel(size)
-sigma = size./2;
+function h = gaussianKernel(size,sigma)
 ind = -floor(size/2) : floor(size/2);
 [X Y] = meshgrid(ind, ind);
 h = exp(-(X.^2 + Y.^2) / (2*sigma*sigma));
 h = imresize(h,[size,size]);
 h = h / sum(h(:));
 
-function [maxOrient,hist] = gradHist(subMagn,subOrient,numBin) % eight bins
+function sub_hist = sub_Hist(subMagn,subOrient,numBin) % eight bins
 % orientation is the orientation ranging from -pi to pi, in rad
 % subMagn is the magnitude
+subMagn = subMagn(:);
+subOrient = subOrient(:);
 bins = linspace(-pi,pi,numBin+1);% bin wall
-% this will not be fast
-offset = 0.5*(bins(4)-bins(3));% 
-[m,n] = size(subOrient);
-hist = zeros(numBin,1);
-binCenter = bins+offset;
-for i = 1:m
-    for j = 1:n
-        temp = bins - subOrient(i,j);
-        flag = 0;
-        for k = 1:(numBin-1)
-            if temp(k)<=0 && temp(k+1)>=0
-                hist(k+1) = hist(k+1) + subMagn(i,j);
-                flag = 1;
-                break
-            end                    
-        end
-        if flag == 0
-            hist(1) = hist(1) + subMagn(i,j);
-        end
+hist_count = zeros(1,numBin);
+num_of_pix = length(subMagn);
+sub_temp = subOrient*ones(1,numBin+1)- ones(num_of_pix,1)*bins;
+sub_temp(sub_temp<=0) = 0;
+sub_temp(sub_temp>0) = 1;
+index_bin = sum(sub_temp,2);
+for k = 1:numBin
+    hist_count(k) = sum(subMagn(index_bin==k));
+end
+sub_hist = hist_count;
+
+function descriptor = grad_hist(magn_patch,orient_patch,num_bin,scale)
+% assuming the patch is 16*16
+% And the image has been rotated
+descriptor = [];
+for i = 1:4:16
+    for j = 1:4:16
+        subMagn = magn_patch(i:i+3,j:j+3);
+        subOrient = orient_patch(i:i+3,j:j+3);
+        subHist = sub_Hist(subMagn,subOrient,num_bin);
+        descriptor = [descriptor,subHist];
     end
 end
-[~,maxIdx] = max(hist);
-maxOrient = binCenter(maxIdx);
-if maxOrient >= pi
-    maxOrient = maxOrient - 2*pi;
-end
+
+        
+        
+
 
